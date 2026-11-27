@@ -5,8 +5,12 @@ let roles = [];
 async function request(path, method = 'GET', body) {
     const headers = {Accept: 'application/json'};
     if (method !== 'GET') {
-        headers[document.querySelector('meta[name="_csrf_header"]').content] =
-            document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+        const csrfToken = document.querySelector('meta[name="_csrf"]');
+        if (!csrfHeader?.content || !csrfToken?.content) {
+            throw new Error('Security token missing. Reload the page and try again.');
+        }
+        headers[csrfHeader.content] = csrfToken.content;
         if (body) headers['Content-Type'] = 'application/json';
     }
     const response = await fetch(api + path, {
@@ -42,7 +46,7 @@ async function loadCurrent() {
 }
 
 function roleOptions(form, selected = []) {
-    form.elements.roleIds.replaceChildren(...roles.map(role => {
+    form.querySelector('select[name="roleIds"]').replaceChildren(...roles.map(role => {
         const option = new Option(role.name.replace('ROLE_', ''), role.id);
         option.selected = selected.includes(role.id);
         return option;
@@ -79,7 +83,7 @@ function formData(form) {
     const data = new FormData(form);
     return {
         name: data.get('name'), lastName: data.get('lastName'),
-        age: Number(data.get('age')), email: data.get('email'),
+        age: data.get('age') === '' ? null : Number(data.get('age')), email: data.get('email'),
         password: data.get('password'), roleIds: data.getAll('roleIds').map(Number)
     };
 }
@@ -96,6 +100,7 @@ function bindForm(action, method) {
             await request(path, method, action === 'delete' ? undefined : formData(form));
             if (action === 'create') {
                 form.reset();
+                roleOptions(form, roles.filter(role => role.name === 'ROLE_USER').map(role => role.id));
                 $('a[href="#users-table"]').tab('show');
             } else {
                 $('#' + action + '-modal').modal('hide');
@@ -114,7 +119,7 @@ async function init() {
     await loadCurrent();
     if (byId('users-body')) {
         roles = await request('/roles');
-        roleOptions(byId('create-form'));
+        roleOptions(byId('create-form'), roles.filter(role => role.name === 'ROLE_USER').map(role => role.id));
         bindForm('create', 'POST');
         bindForm('edit', 'PUT');
         bindForm('delete', 'DELETE');

@@ -53,18 +53,26 @@ public class UserRestController {
         return user;
     }
     @GetMapping("/users")
-    public List<UserDto> all() { return users.findAll().stream().map(UserDto::from).toList(); }
+    public List<UserDto> all() {
+        return users.findAll().stream().map(UserDto::from).toList();
+    }
     @GetMapping("/users/{id}")
-    public UserDto one(@PathVariable Long id) { return UserDto.from(requireUser(id)); }
+    public UserDto one(@PathVariable Long id) {
+        return UserDto.from(requireUser(id));
+    }
     @GetMapping("/user")
     public UserDto current(@AuthenticationPrincipal User principal) {
         return UserDto.from(requireUser(principal.getId()));
     }
     @GetMapping("/roles")
-    public List<RoleDto> roles() { return roles.findAll().stream().map(RoleDto::from).toList(); }
+    public List<RoleDto> roles() {
+        return roles.findAll().stream().map(RoleDto::from).toList();
+    }
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
-    public void create(@RequestBody UserRequest request) { users.create(request.toUser(), request.roleIds()); }
+    public void create(@RequestBody UserRequest request) {
+        users.create(request.toUser(), request.roleIds());
+    }
     @PutMapping("/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void update(@PathVariable Long id, @RequestBody UserRequest request) {
@@ -79,5 +87,7 @@ public class UserRestController {
     }
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> invalid(IllegalArgumentException e) { return Map.of("message", e.getMessage()); }
+    public Map<String, String> invalid(IllegalArgumentException e) {
+        return Map.of("message", e.getMessage());
+    }
 }

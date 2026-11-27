@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.open-in-view=false",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "app.admin.password=integration-admin-pass",
         "app.user.password=integration-user-pass"
@@ -51,7 +52,9 @@ class SecurityIntegrationTest {
 
     @Test void adminCanManageUsersViaRest() throws Exception {
         MockHttpSession session = login("admin@example.com", "integration-admin-pass");
-        mvc.perform(get("/admin").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/admin").session(session)).andExpect(status().isOk())
+                .andExpect(view().name("admin"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")));
         mvc.perform(get("/api/users").session(session)).andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].password").doesNotExist());
         String roles = mvc.perform(get("/api/roles").session(session)).andExpect(status().isOk())
